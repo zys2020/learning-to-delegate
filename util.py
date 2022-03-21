@@ -618,7 +618,7 @@ class VRSubProblem(VRProblem):
         ])
 
 def run_lkh(directory, depot, locs, demand, capacity, init_routes, init_cost, max_trials, ptype='CVRP', pkwargs={}, seed=0):
-    def lkh_helper(temp):
+    def lkh_helper(directory, temp):
         problem_path = os.path.join(directory, 'problem.vrp')
         init_routes_path = os.path.join(directory, 'input.tour')
         output_path = os.path.join(directory, 'output.tour')
@@ -648,6 +648,7 @@ def run_lkh(directory, depot, locs, demand, capacity, init_routes, init_cost, ma
         duration = time() - start
 
         try:
+            print(os.listdir(directory))
             tour = read_vrplib_solution(output_path, n=len(demand)) # zero-separated routes
         except FileNotFoundError as e:
             print('LKH Error:')
@@ -662,7 +663,10 @@ def run_lkh(directory, depot, locs, demand, capacity, init_routes, init_cost, ma
 
     if directory is None:
         with tempfile.TemporaryDirectory(dir=TMPDIR) as directory:
-            return lkh_helper(temp=True)
+            print('v'*100)
+            print(directory)
+            print(os.path.exists(directory))
+            return lkh_helper(directory, temp=True)
     return lkh_helper(temp=False)
 
 def run_hgs(directory, depot, locs, demand, capacity, time_threshold, seed=0):

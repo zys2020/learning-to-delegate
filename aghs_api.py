@@ -1,3 +1,5 @@
+import os
+import shutil
 from util import *
 from pathlib import Path
 from subprocess import check_call
@@ -13,17 +15,32 @@ app = Flask(__name__)
 def aghs_api():
     data = json.loads(request.form['data'])
     now = datetime.utcnow() + timedelta(hours=8)
+    path = "./input_data_of_aghs_api"
+    print(os.path.curdir)
+    if not os.path.exists(path):
+        os.makedirs(path)
     filename = now.strftime("%Y-%m-%d_%H-%M-%S") + ".npz"
-    nodes = np.array([(item['x'], item['y']) for item in data['nodes']])
-    demands = np.array(data['demands'])
-    window = np.array([(item['st'], item['et']) for item in data['time_windows']])
-    service_time = np.array(data['service_time'])
+    filename = os.path.join(path, filename)
+    nodes = np.array([(item['x'], item['y']) for item in data['nodes']], dtype=np.float16)
+    demands = np.array(data['demands'], dtype=np.int8)
+    window = np.array([(item['st'], item['et']) for item in data['time_windows']], dtype=np.float16)
+    service_time = np.array(data['service_time'], dtype=np.float16)
     np.savez(filename, nodes=nodes, demands=demands, window=window, service_time=service_time)
     only_lkh = True if data['only_lkh'] == "True" else False
     generate_problem(original_data_path=filename, only_lkh=only_lkh)
-    routes = parse_model_output()
+    routes = parse_model_output(only_lkh)
     output_json = json.dumps(routes)
+
+    filename = now.strftime("%Y-%m-%d_%H-%M-%S") + "_routes.json"
+    filename = os.path.join(path, filename)
+    with open(filename, 'w') as f:
+        f.write(output_json)
+    if not only_lkh:
+        filename = "/home/aghs/learning-to-delegate/exps/cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/generations_val_beam1_depth400_lkh500/40000/0.npz"
+        shutil.copyfile(filename, os.path.join(path, now.strftime("%Y-%m-%d_%H-%M-%S") + "_0.npz"))
+        shutil.rmtree("/home/aghs/learning-to-delegate/exps/cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/generations_val_beam1_depth400_lkh500/")
     return output_json
+
 
 def load_gens(data_path):
     path = data_path / "0.npz"
@@ -63,7 +80,8 @@ def parse_model_output(only_lkh=False):
     if only_lkh:
         filename = "generations/cvrptw_uniform_N500/problems_val.npz"
         data = np.load(filename)
-        return unpack_routes(data['routes'][0])
+        routes = unpack_routes(data['routes'][0])
+        return [route.tolist() for route in routes]
     instances = 1
     runs = 1
 
@@ -176,7 +194,8 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
 
 
 # if __name__ == '__main__':
-#     app.run(host='0.0.0.0')
+    # print(aghs_api())
+    # app.run(host='0.0.0.0')
     # generate_problem()
     # routes = parse_model_output()
     # print(len(routes), routes)
