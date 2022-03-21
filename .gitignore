@@ -3,3 +3,7 @@ lkh3/LKH-3.0.4/LKH
 hgs/HGS-CVRP/Program/genvrp
 __pycache__/
 .ipynb_checkpoints/
+.idea
+docker-image
+exps
+generations

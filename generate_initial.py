@@ -54,13 +54,39 @@ def generate_problem(args, init=None):
     init_routes = solve_init(xys, demands, args, pkwargs=pkwargs)
     return VRFullProblem(xys, demands, args.capacity, init_routes, ptype=args.ptype, pkwargs=pkwargs)
 
+
+def generate_problem_for_aghs(args, xys, demands, capacity, windows, service_time):
+    pkwargs = {}
+    pkwargs['window'] = windows
+    pkwargs['service_time'] = service_time
+    init_routes = solve_init(xys, demands, args, pkwargs=pkwargs)
+    return VRFullProblem(xys, demands, capacity, init_routes, ptype=args.ptype, pkwargs=pkwargs)
+
+
 def generate_i(gen_args):
     i, seed, args, init = gen_args
     np.random.seed(seed)
     start_time = time()
     print(f'Generating problem {i}...')
 
-    p = generate_problem(args, init)
+    # p = generate_problem(args, init)
+
+    # xys = np.array([
+    #     [0.1, 0.1], [0.1, 0.2], [0.1,0.3], [0.1, 0.4], [0.1, 0.5], [0.1, 0.6]
+    #     ]).reshape((6, 2))
+    # demands = np.array([0, 1, 1, 1, 1, 1])
+    # capacity = 1000  # infinity
+    # windows = np.array([
+    #     [0, 24 * 60], [1*60, 2*60], [2*60, 3*60], [3*60, 4*60], [4*60,5*60], [5*60, 6*60]
+    #     ]).reshape((6, 2))  # unit: min
+    # service_time = 10  # unit: min
+    data = np.load(args.original_data_path)
+    xys = data['nodes']
+    demands = data['demands']
+    capacity = 1000
+    windows = data['window']
+    service_time = data['service_time']
+    p = generate_problem_for_aghs(args, xys, demands, capacity, windows, service_time)
 
     total_time = time() - start_time
     print(f'Problem {i} took {total_time:.4f} seconds')
@@ -90,6 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('--solver', type=str, choices=['LKH', 'HGS'], default='LKH')
     parser.add_argument('--naive_init', action='store_true')
     parser.add_argument('--full_solver_init', action='store_true')
+    parser.add_argument('--original_data_path', type=Path, default=None)
     args = parser.parse_args()
 
     args.save_dir.mkdir(parents=True, exist_ok=True)
@@ -117,12 +144,15 @@ if __name__ == '__main__':
     else:
         print(f'Generating {args.n_instances} {args.ptype} instances from {"uniform distribution" if args.n_c == 0 else f"mixed distribution with {args.n_c} city clusters" if args.mixed else f"clustered distribution with {args.n_c} city_clusters"}, each with {args.n_clusters} radial sections to run LKH subsolver on', flush=True)
 
-    results = multiprocess(generate_i, list(zip(
-        range(0, args.n_instances),
-        np.random.randint(np.iinfo(np.int32).max, size=args.n_instances),
-        [args] * args.n_instances,
-        zip(nodes, demands, capacities, pkwargs) if ref_problems else [None] * args.n_instances,
-    )), cpus=args.n_process or (args.n_cpus - 1) // args.n_clusters + 1)
+    results = multiprocess(
+        generate_i, 
+        list(zip(range(0, args.n_instances),
+            np.random.randint(np.iinfo(np.int32).max, size=args.n_instances),
+            [args] * args.n_instances,
+            zip(nodes, demands, capacities, pkwargs) if ref_problems else [None] * args.n_instances,
+        )), 
+        cpus=args.n_process or (args.n_cpus - 1) // args.n_clusters + 1
+        )
 
     xys, demands, capacities, route_dists, init_tours, pkwargs, times = zip(*results)
     route_dists = pad_each(route_dists)
