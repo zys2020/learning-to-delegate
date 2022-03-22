@@ -703,6 +703,7 @@ def beam_search(nodes, demands, capacity, init_routes, args, pkwargs={}, n_cpus=
     transitions = [] # Tuples of (problem_id, action, next_problem_id)
     actions = [] # Tuples of (problem_id, action, LKH solution index)
     lkh_solutions = [] # Tuples of (routes, dist)
+    node_indices = [] # The indices of nodes in the lkh_solutions corresponding to original vrp
 
     problem_id = 0
     fullp = VRFullProblem(nodes, demands, capacity, init_routes, ptype=args.ptype, pkwargs=pkwargs).set_id(problem_id)
@@ -731,6 +732,7 @@ def beam_search(nodes, demands, capacity, init_routes, args, pkwargs={}, n_cpus=
 
             if args.solver == 'LKH':
                 tasks = [sp.get_lkh_args(max_trials=args.n_lkh_trials, init=args.init_tour) for sp in subps_todo]
+                # The indices of nodes of a route in the result is different with that in the original vrp.
                 results = multithread(lambda args: run_lkh(*args), tasks, cpus=n_cpus, show_bar=show_bar)
             elif args.solver == 'HGS':
                 tasks = [sp.get_hgs_args(time_threshold=args.time_threshold) for sp in subps_todo]
@@ -742,6 +744,7 @@ def beam_search(nodes, demands, capacity, init_routes, args, pkwargs={}, n_cpus=
             change_dists = np.array([subp.set_routes(unpack_routes(subproblem_cache[subp][1])) for subp in subps])
             actions.extend((fullp.id, subp.action, subproblem_cache[subp][0]) for subp in subps)
             lkh_solutions.extend((subp.total_dist, new_tour) for subp, (new_tour, _) in zip(subps_todo, results))
+            node_indices.extend([subp.node_idxs for subp in subps_todo])
             if feedback_fn is not None:
                 feedback_fn(action_candidates, subps, change_dists)
 
@@ -752,6 +755,7 @@ def beam_search(nodes, demands, capacity, init_routes, args, pkwargs={}, n_cpus=
                 best_problems.add((fullp.total_dist + subp.change_dist, fullp, subp))
         if terminate: break
 
+        # unused
         if getattr(args, 'double_lkh', False):
             _, ps, subps = zip(*best_problems)
             if args.solver == 'LKH':
@@ -780,11 +784,11 @@ def beam_search(nodes, demands, capacity, init_routes, args, pkwargs={}, n_cpus=
             problem_id += 1
             fullp.set_id(problem_id)
             transitions.append((fullp.prev_id, fullp.prev_action, fullp.id))
-    return subproblem_cache, transitions, actions, lkh_solutions, times
+    return subproblem_cache, transitions, actions, lkh_solutions, times, node_indices
 
 def save_beam_search(save_path, *beam_args, kwargs_fn=None, **kwargs):
     nodes, demands, capacity, init_routes, args = beam_args
-    subproblem_cache, transitions, actions, lkh_solutions, times = beam_search(*beam_args, **kwargs)
+    subproblem_cache, transitions, actions, lkh_solutions, times, node_indices = beam_search(*beam_args, **kwargs)
 
     lkh_dists, lkh_subtours = zip(*lkh_solutions)
     np.savez(save_path,
@@ -797,6 +801,7 @@ def save_beam_search(save_path, *beam_args, kwargs_fn=None, **kwargs):
         lkh_dists=np.array(lkh_dists, dtype=np.float32),
         lkh_routes=pad_each(lkh_subtours).astype(np.uint16),
         times=np.array(times),
+        node_indices=np.array(node_indices),
         **kwargs.get('pkwargs', {}),
         **(kwargs_fn() if kwargs_fn else {}),
     )
@@ -807,7 +812,7 @@ def reconstruct_data(nodes, demands, capacity, init_routes, transitions, actions
     actions: Tuples of (problem_id, action, LKH solution index)
     lkh_solutions: Tuples of (routes, dist)
     """
-    pkwargs = {k: pkwargs[k] for k in dict(CVRP=[], CVRPTW=['window', 'service_time', 'window_distance_scale'], VRPMPD=['is_pickup'])[ptype]}
+    pkwargs = {k: pkwargs[k] for k in dict(CVRP=[], CVRPTW=['window', 'service_time'], VRPMPD=['is_pickup'])[ptype]}
     # If same (p_id, a) maps to multiple lkh_i (as in double LKH), the later one is kept
     pa2lkh = {(p_id, a): lkh_i for p_id, a, lkh_i in actions}
     p2alkh = defaultdict(list)
