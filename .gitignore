@@ -4,3 +4,6 @@ hgs/HGS-CVRP/Program/genvrp
 __pycache__/
 .ipynb_checkpoints/
 *.pid
+.idea
+docker-image
+generations
