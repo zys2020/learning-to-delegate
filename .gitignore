@@ -7,3 +7,5 @@ __pycache__/
 .idea
 id_rsa
 generations
+input_data_of_aghs_api
+log

@@ -64,14 +64,14 @@ make test
 ############### Start ###################
 
 #### Generate Original VRP ####
-export PTYPE=CVRPTW
+export PTYPE=CVRP
 export SPLIT=val # options: [train,val,test]
 export N=500 # options: [500,1000,2000,3000]
-export SAVE_DIR=generations/cvrptw_uniform_N$N
+export SAVE_DIR=generations/uniform_N$N
 export N_INSTANCES=1
 export N_CPUS=40
 
-python generate_initial.py $SAVE_DIR $SPLIT $N --ptype CVRPTW --service_time 0.2 --max_window_width 1.0 --n_instances $N_INSTANCES --n_process $N_CPUS --n_threads_per_process 1
+python generate_initial.py $SAVE_DIR $SPLIT $N --ptype $PTYPE --service_time 0.2 --max_window_width 1.0 --n_instances $N_INSTANCES --n_process $N_CPUS --n_threads_per_process 1
 #### Generate Original VRP ####
 
 #### Generate VRP subproblem ####
@@ -84,12 +84,12 @@ python generate_multiprocess.py $DATASET_DIR $SPLIT --ptype $PTYPE --save_dir $S
 
 
 ###### Preprocess Data ######
-python preprocess.py $DATASET_DIR val train --ptype $PTYPE --beam_width 1 --n_route_neighbors $K --generate_depth $DEPTH --n_cpus $N_CPUS
+python preprocess.py $DATASET_DIR val --ptype $PTYPE --beam_width 1 --n_route_neighbors $K --generate_depth $DEPTH --n_cpus $N_CPUS
 ###### Preprocess Data ######
 
 
 ###### Generate Trajectory Solution ######
-export TRAIN_DIR=exps/cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001
+export TRAIN_DIR=exps/uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001
 export GENERATE_CHECKPOINT_STEP=40000
 export GENERATE_SAVE_DIR=$SAVE_DIR # This should be set as described above
 export GENERATE_PARTITION=val # options: [val,test]

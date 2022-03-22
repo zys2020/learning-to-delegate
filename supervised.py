@@ -662,7 +662,6 @@ if __name__ == '__main__':
             save_yaml(config, obj)
             print(f'Saved args to {config}')
     print(args, flush=True)
-
     args.generate_save_dir = get_generate(args) if args.generate or args.n_step_generate else None
     args.beam_width = args.beam_width or 1
     args.n_step_generate = args.n_step_generate or np.inf

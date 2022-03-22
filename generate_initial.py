@@ -69,15 +69,15 @@ def generate_i(gen_args):
     start_time = time()
     print(f'Generating problem {i}...')
 
-    # p = generate_problem(args, init)
+    p = generate_problem(args, init)
 
-    data = np.load(args.original_data_path)
-    xys = data['nodes']
-    demands = data['demands']
-    capacity = 1000
-    windows = data['window']
-    service_time = data['service_time']
-    p = generate_problem_for_aghs(args, xys, demands, capacity, windows, service_time)
+    # data = np.load(args.original_data_path)
+    # xys = data['nodes']
+    # demands = data['demands']
+    # capacity = 1000
+    # windows = data['window']
+    # service_time = data['service_time']
+    # p = generate_problem_for_aghs(args, xys, demands, capacity, windows, service_time)
 
     total_time = time() - start_time
     print(f'Problem {i} took {total_time:.4f} seconds')

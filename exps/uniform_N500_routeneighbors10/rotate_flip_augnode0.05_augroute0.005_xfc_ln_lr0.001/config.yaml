@@ -1,0 +1,13 @@
+augment_flip: true
+augment_perturb_node: 0.05
+augment_perturb_route: 0.005
+augment_rotate: true
+# data_suffix: _routeneighbors10
+data_suffix: _routeneighbors5_beam1_depth40
+dataset_dir: generations/uniform_N500/subproblem_selection_lkh
+lr: 0.001
+model_save_dir: exps/uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/models
+n_route_neighbors: 10
+train_dir: exps/uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001
+use_layer_norm: true
+use_x_fc: true

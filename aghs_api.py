@@ -37,9 +37,9 @@ def aghs_api():
         f.write(output_json)
     shutil.rmtree("/home/aghs/learning-to-delegate/generations")
     if not only_lkh:
-        filename = "/home/aghs/learning-to-delegate/exps/cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/generations_val_beam1_depth400_lkh500/40000/0.npz"
+        filename = "/home/aghs/learning-to-delegate/exps/uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/generations_val_depth400_lkh500/40000/0.npz"
         shutil.copyfile(filename, os.path.join(path, now.strftime("%Y-%m-%d_%H-%M-%S") + "_0.npz"))
-        shutil.rmtree("/home/aghs/learning-to-delegate/exps/cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/generations_val_beam1_depth400_lkh500/")
+        shutil.rmtree(filename[:-6])
     return output_json
 
 
@@ -79,26 +79,24 @@ def load_gens(data_path):
 
 def parse_model_output(only_lkh=False):
     if only_lkh:
-        filename = "generations/cvrptw_uniform_N500/problems_val.npz"
+        filename = "generations/uniform_N500/problems_val.npz"
         data = np.load(filename)
         routes = unpack_routes(data['routes'][0])
         return [route.tolist() for route in routes]
-    instances = 1
-    runs = 1
 
     exp = Path('.') / 'exps' / \
-        'cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001'
+        'uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001'
 
-    routes = load_gens(exp / 'generations_val_beam1_depth400_lkh500/40000')
+    routes = load_gens(exp / 'generations_val_depth400_lkh500/40000')
     return routes
 
 
 def generate_problem(original_data_path='./sample.npz', only_lkh=False):
     params = dict(
-        PTYPE="CVRPTW",
+        PTYPE="CVRP",
         SPLIT="val",
         N="500",
-        SAVE_DIR="generations/cvrptw_uniform_N500",
+        SAVE_DIR="generations/uniform_N500",
         N_INSTANCES="1",
         N_CPUS="40"
         )
@@ -108,7 +106,7 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
         params["SAVE_DIR"],
         params["SPLIT"],
         params["N"],
-        "--ptype", "CVRPTW", 
+        "--ptype", params['PTYPE'], 
         "--service_time", "0.0",
         "--max_window_width", "1.0",
         "--n_instances", params["N_INSTANCES"],
@@ -131,7 +129,7 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
         "generate_multiprocess.py", 
         params["DATASET_DIR"],
         params["SPLIT"],
-        "--ptype", "CVRPTW", 
+        "--ptype", params['PTYPE'], 
         "--save_dir", params['SAVE_DIR'],
         "--n_lkh_trials", "500",
         "--n_cpus", params["N_CPUS"],
@@ -150,7 +148,7 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
         "preprocess.py", 
         params["DATASET_DIR"],
         params["SPLIT"],
-        "--ptype", "CVRPTW", 
+        "--ptype", params['PTYPE'], 
         "--beam_width", '1',
         "--n_route_neighbors", params['K'],
         "--generate_depth", params['DEPTH'],
@@ -161,7 +159,7 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
 
 
     # ###### Generate Trajectory Solution ######
-    params['TRAIN_DIR'] = 'exps/cvrptw_uniform_N500_routeneighbors5_beam1_depth40/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001'
+    params['TRAIN_DIR'] = 'exps/uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001'
     params['GENERATE_CHECKPOINT_STEP'] = '40000'
     params['GENERATE_SAVE_DIR'] = params['SAVE_DIR']
     params['GENERATE_PARTITION'] = 'val'
@@ -174,15 +172,12 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
         "supervised.py", 
         params["DATASET_DIR"],
         params["TRAIN_DIR"],
-        "--ptype", "CVRPTW", 
+        "--ptype", params['PTYPE'], 
         "--generate",
         "--step", params['GENERATE_CHECKPOINT_STEP'],
         "--generate_partition", params['GENERATE_PARTITION'],
         "--save_dir", params["GENERATE_SAVE_DIR"],
         "--save_suffix", params['GENERATE_SUFFIX'],
-        "--generate_depth", params['DEPTH'],
-        "--beam_width", '1',
-        "--n_route_neighbors", params['K'],
         "--generate_depth", params['DEPTH'],
         "--generate_index_start", "0",
         "--generate_index_end", params['N_INSTANCES'],
@@ -195,6 +190,8 @@ def generate_problem(original_data_path='./sample.npz', only_lkh=False):
 
 
 # if __name__ == '__main__':
+    # data_path = Path("exps/uniform_N500_routeneighbors10/rotate_flip_augnode0.05_augroute0.005_xfc_ln_lr0.001/generations_val_depth400_lkh500/40000")
+    # print(load_gens(data_path))
     # print(aghs_api())
     # app.run(host='0.0.0.0')
     # generate_problem()

@@ -2,7 +2,7 @@ import json
 import requests
 import numpy as np
 
-url = "http://118.195.176.251:9908/aghs_api"
+url = "http://118.195.176.251:9904/aghs_api"
 
 data = np.load("./sample.npz")
 post_data = {}
