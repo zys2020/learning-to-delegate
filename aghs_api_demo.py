@@ -8,9 +8,7 @@ data = np.load("./sample.npz")
 post_data = {}
 post_data['nodes'] = [{"x": str(item[0]), "y": str(item[1])} for item in data['nodes']]
 post_data['demands'] = [str(item) for item in data['demands']]
-post_data['time_windows'] = [{"st": str(item[0]), "et": str(item[1])} for item in data['window']]
-post_data['service_time'] = "20"
-# When only_lkh is "True", the pretrained model is invoked and consumes about 5 min. 
+# When only_lkh is "True", the pretrained model is invoked and consumes about 10 min. 
 # Otherwise, the pure lhk heuristic method is invoked and consumes about 10 s.   
 post_data['only_lkh'] = "True"
 
@@ -34,15 +32,6 @@ post_data =
     'demands': [
         0, 1, 1, 1, 1
     ],
-    # 501个结点的开始和结束服务时间窗，第1个是车库
-    'time_windows': [
-        {'st':0, 'et':24*60},
-        {'st':8*60, 'et':9*60},
-        {'st':8*60, 'et':9*60},
-        {'st':8*60, 'et':9*60},
-        {'st':8*60, 'et':9*60}
-    ],
-    'service_time': 20,
     # "True" 不使用预训练模型; "False"使用预训练模型
     'only_lkh': "True"
 }

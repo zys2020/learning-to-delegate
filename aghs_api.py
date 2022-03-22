@@ -23,9 +23,7 @@ def aghs_api():
     filename = os.path.join(path, filename)
     nodes = np.array([(item['x'], item['y']) for item in data['nodes']], dtype=np.float16)
     demands = np.array(data['demands'], dtype=np.int8)
-    window = np.array([(item['st'], item['et']) for item in data['time_windows']], dtype=np.float16)
-    service_time = np.array(data['service_time'], dtype=np.float16)
-    np.savez(filename, nodes=nodes, demands=demands, window=window, service_time=service_time)
+    np.savez(filename, nodes=nodes, demands=demands)
     only_lkh = True if data['only_lkh'] == "True" else False
     generate_problem(original_data_path=filename, only_lkh=only_lkh)
     routes = parse_model_output(only_lkh)
